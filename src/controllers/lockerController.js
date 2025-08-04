@@ -35,4 +35,30 @@ exports.getLockersByClientId = async (req, res) => {
   }
 };
 
+exports.getClientIdFromLocker = async (req, res) => {
+  const { locker_id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from('lockers')
+      .select('client_id')
+      .eq('id', locker_id)
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (!data) {
+      return res.status(404).json({ message: 'Locker not found.' });
+    }
+
+    return res.status(200).json({ client_id: data.client_id });
+  } catch (err) {
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
