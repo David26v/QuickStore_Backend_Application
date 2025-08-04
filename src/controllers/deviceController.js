@@ -3,7 +3,6 @@ const supabase = require("../supabase/supabaseClient");
 exports.registerDevice = async (req, res) => {
   const { user_id, device_id, manufacturer, model, android_version, locker_id } = req.body;
 
-  // Check required fields
   if (!device_id || !manufacturer || !model || !android_version) {
     return res.status(400).json({
       error: 'Missing required fields: device_id, manufacturer, model, android_version are required.'
