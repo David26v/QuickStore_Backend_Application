@@ -15,3 +15,4 @@ exports.assignUser = async (doorId, userId) => {
     .eq('id', doorId);
   return { data, error };
 };
+ 

@@ -10,7 +10,9 @@ exports.registerDevice = async (req, res) => {
   }
 
   try {
-    // Check if device already exists
+
+    const status = true; 
+
     const { data: existingDevice, error: findError } = await supabase
       .from('devices')
       .select(`
@@ -26,7 +28,6 @@ exports.registerDevice = async (req, res) => {
       .single();
 
     if (findError && findError.code !== 'PGRST116') {
-      // PGRST116: no rows found
       console.error('Supabase find error:', findError);
       return res.status(500).json({ error: findError.message });
     }
@@ -43,7 +44,8 @@ exports.registerDevice = async (req, res) => {
         manufacturer,
         model,
         android_version,
-        locker_id
+        locker_id,
+        status: status, 
       })
       .select()
       .single();
@@ -55,7 +57,8 @@ exports.registerDevice = async (req, res) => {
 
     return res.status(201).json({ message: 'Device registered successfully', data: newDevice });
 
-  } catch (err) {
+  } 
+  catch (err) {
     console.error('Server error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
