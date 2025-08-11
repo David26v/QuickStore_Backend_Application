@@ -88,7 +88,7 @@ exports.controlLockerDoor = async (req, res) => {
 
     // 5. Determine new locker status
     let newStatus;
-    if (action_type === "opened") newStatus = "in_use";
+    if (action_type === "opened") newStatus = "occupied";
     if (action_type === "closed") newStatus = "available";
     if (action_type === "locked") newStatus = "locked";
     if (action_type === "unlocked") newStatus = "available";
