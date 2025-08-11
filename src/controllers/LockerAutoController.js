@@ -10,7 +10,6 @@ exports.controlLockerDoorAutoAssign = async (req, res) => {
       return res.status(400).json({ error: "Invalid action_type" });
     }
 
-    // 1. Get user data to verify they exist
     const { data: userData, error: userError } = await supabase
       .from("clients_users")
       .select("client_id, is_active")
@@ -27,7 +26,6 @@ exports.controlLockerDoorAutoAssign = async (req, res) => {
 
     const clientId = userData.client_id;
 
-    // 2. Get client setting
     const { data: lockerSettings, error: lockerSettingsError } = await supabase
       .from("client_locker_settings")
       .select("id")
