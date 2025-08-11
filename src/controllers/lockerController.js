@@ -100,7 +100,7 @@ exports.getLockerStatuses = async (req, res) => {
     const formattedLockers = lockerDoors.map(door => {
 
       let status = 'available';
-      
+
       if (door.status === 'in_use') status = 'occupied';
       if (door.status === 'overdue') status = 'overdue';
       if (door.status === 'locked') status = 'occupied'; 
