@@ -75,7 +75,7 @@ exports.getDeviceInfo = async (req, res) => {
       .from('devices')
       .select(`
         device_id,  
-        user_id,
+        client_id,    
         locker_id,
         lockers (
           id,
