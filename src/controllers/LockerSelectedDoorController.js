@@ -164,3 +164,57 @@ exports.assignLockerToUser = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+
+
+exports.validateAccessCode = async (req, res) => {
+  const { access_code } = req.body;
+
+  try {
+    if (!access_code) {
+      return res.status(400).json({ error: "Access code is required" });
+    }
+
+    // First try direct match (plain text)
+    const { data: credentialsData, error: credentialsError } = await supabase
+      .from("user_credentials")
+      .select("user_id, is_active")
+      .eq("credential_hash", access_code)
+      .eq("method_type", "code")
+      .single();
+
+    if (credentialsData && credentialsData.is_active) {
+      return res.status(200).json({
+        user_id: credentialsData.user_id,
+        message: "Access code validated"
+      });
+    }
+
+    // If not found, try bcrypt comparison
+    const { data: allCredentials, error: allError } = await supabase
+      .from("user_credentials")
+      .select("user_id, credential_hash, is_active")
+      .eq("method_type", "code");
+
+    if (allError) throw allError;
+
+    // Check each credential with bcrypt
+    for (const credential of allCredentials) {
+      if (credential.is_active) {
+        const isValid = await bcrypt.compare(access_code, credential.credential_hash);
+        if (isValid) {
+          return res.status(200).json({
+            user_id: credential.user_id,
+            message: "Access code validated"
+          });
+        }
+      }
+    }
+
+    return res.status(403).json({ error: "Invalid access code" });
+
+  } catch (err) {
+    console.error("Error validating access code:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
