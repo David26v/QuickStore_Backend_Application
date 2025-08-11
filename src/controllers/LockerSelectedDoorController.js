@@ -2,10 +2,11 @@ const supabase = require("../supabase/supabaseClient");
 const bcrypt = require("bcrypt");
 
 exports.assignLockerToUser = async (req, res) => {
-  const { door_id, user_id, access_code, source = "apk" } = req.body;
+  const {door_id } = req.params
+
+  const { user_id, access_code, source = "apk" } = req.body;
 
   try {
-    // 1. Validate required fields
     if (!door_id || !user_id) {
       return res.status(400).json({ 
         error: "door_id and user_id are required" 
@@ -164,8 +165,6 @@ exports.assignLockerToUser = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
-
-
 
 exports.validateAccessCode = async (req, res) => {
   const { access_code } = req.body;
