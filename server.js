@@ -19,6 +19,6 @@ app.use('/api/clients',clientRoutes)
 app.use('/api/locker-doors',lockerDoorRoutes);
 
 // Ready!
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`✅ Backend server running on http://localhost:${port}`);
 });

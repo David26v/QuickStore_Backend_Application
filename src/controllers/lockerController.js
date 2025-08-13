@@ -61,7 +61,6 @@ exports.getClientIdFromLocker = async (req, res) => {
   }
 };
 
-
 exports.getLockerStatuses = async (req, res) => {
   const { client_id } = req.params;
 
@@ -96,15 +95,36 @@ exports.getLockerStatuses = async (req, res) => {
       return res.status(404).json({ message: 'No lockers found for this client.' });
     }
 
-    
-    const formattedLockers = lockerDoors.map(door => {
+    // Fetch auth methods for each locker door
+    const lockerIds = lockerDoors.map(door => door.id);
+    const { data: lockerEvents, error: eventsError } = await supabase
+      .from('locker_door_events')
+      .select(`
+        locker_door_id,
+        event_type,
+        metadata,
+        created_at
+      `)
+      .in('locker_door_id', lockerIds)
+      .eq('event_type', 'assigned')
+      .order('created_at', { ascending: false });
 
+    if (eventsError) {
+      console.error('Events fetch error:', eventsError);
+    }
+
+    const formattedLockers = lockerDoors.map(door => {
       let status = 'available';
 
-      if (door.status === 'in_use') status = 'occupied';
-      if (door.status === 'overdue') status = 'overdue';
-      if (door.status === 'locked') status = 'occupied'; 
-      
+      if (door.status === 'occupied' || door.status === 'in_use') {
+        status = 'occupied';
+      } 
+      else if (door.status === 'overdue') {
+        status = 'overdue';
+      } 
+      else if (door.status === 'locked') {
+        status = 'occupied'; 
+      }
 
       let lastAccessTime = null;
       if (door.last_opened_at) {
@@ -113,14 +133,13 @@ exports.getLockerStatuses = async (req, res) => {
         lastAccessTime = new Date(door.assigned_at).getTime();
       }
 
-      // Format assigned user info
       let assignedUser = null;
-      if (door.clients_users && (door.status === 'in_use' || door.status === 'locked')) {
+      if (door.clients_users && door.assigned_user_id) {
         const fullName = door.clients_users.full_name || 'Unknown User';
         const nameParts = fullName.split(' ');
         const firstName = nameParts[0] || 'Unknown';
         const lastName = nameParts.slice(1).join(' ') || 'User';
-        
+
         assignedUser = {
           userId: door.clients_users.id,
           firstName: firstName,
@@ -128,22 +147,32 @@ exports.getLockerStatuses = async (req, res) => {
         };
       }
 
+      let authMethod = 'Unknown';
+      if (lockerEvents) {
+        const doorEvents = lockerEvents.filter(event => event.locker_door_id === door.id);
+        if (doorEvents.length > 0) {
+          const latestEvent = doorEvents[0];
+          if (latestEvent.metadata && latestEvent.metadata.auth_method) {
+            authMethod = latestEvent.metadata.auth_method;
+          }
+        }
+      }
+
       return {
-        id: door.door_number,  
-        doorId: door.id,      
+        id: door.door_number,
+        doorId: door.id,
         status: status,
         lastAccessTime: lastAccessTime,
         assignedUser: assignedUser,
-        location: `Row ${Math.ceil(door.door_number / 6)}, Column ${(door.door_number - 1) % 6 + 1}`
+        location: `Row ${Math.ceil(door.door_number / 6)}, Column ${(door.door_number - 1) % 6 + 1}`,
+        authMethod: authMethod
       };
     });
 
     return res.status(200).json(formattedLockers);
-
   } catch (err) {
     console.error('Server error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
