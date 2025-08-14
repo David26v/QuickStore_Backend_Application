@@ -40,3 +40,37 @@
       auth_methods: allowedMethods,
     });
   };
+
+
+  exports.getClientsUsers = async (req, res) => {
+  const { client_id } = req.query;
+
+  if (!client_id) {
+    return res.status(400).json({
+      error: "Missing client_id",
+      message: "Please provide client_id as query parameter",
+    });
+  }
+
+  try {
+    let { data, error } = await supabase
+      .from("clients_users")
+      .select("id, full_name, email, phone, department, is_active")
+      .eq("client_id", client_id)
+      .is("is_active", true) // only active users
+      .order("full_name", { ascending: true });
+
+    if (error) throw error;
+
+    return res.status(200).json({
+      users: data || [],
+      count: data?.length || 0,
+    });
+  } catch (err) {
+    console.error("Error fetching users by client:", err);
+    return res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+    });
+  }
+};

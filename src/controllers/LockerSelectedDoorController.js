@@ -374,7 +374,7 @@
             event: "door_session_ended",
             payload: { door_id, user_id, status: "available" }
           });
-
+          
           console.log(`Door ${door_id} opened for pickup after session end`);
 
           return res.status(200).json({
